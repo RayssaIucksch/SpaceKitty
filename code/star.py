@@ -8,7 +8,6 @@ class Star(Entity):
     def __init__(self, position: tuple):
         super().__init__("star", position)
         self.speed = ENTITY_SPEED['Star']
-        print(f"Star image loaded: {self.surf is not None}")
         # Redimensiona para 30x30 (meteoros são 50x50)
         self.surf = pygame.transform.scale(self.surf, (30, 30))
         self.rect = self.surf.get_rect(center=position)
