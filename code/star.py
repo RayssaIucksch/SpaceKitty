@@ -9,7 +9,7 @@ class Star(Entity):
         super().__init__("star", position)
         self.speed = ENTITY_SPEED['Star']
         # Redimensiona para 30x30 (meteoros são 50x50)
-        self.surf = pygame.transform.scale(self.surf, (30, 30))
+        self.surf = pygame.transform.scale(self.surf, (30, 40))
         self.rect = self.surf.get_rect(center=position)
 
     def move(self):

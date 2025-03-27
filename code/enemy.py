@@ -12,7 +12,7 @@ class Enemy(Entity):
             self.damage = 1
             self.speed = ENTITY_SPEED['Meteor']
 
-            self.surf = pygame.transform.scale(self.surf, (50, 50))  # Tamanho fixo
+            self.surf = pygame.transform.scale(self.surf, (70, 50))  # Tamanho fixo
             self.rect = self.surf.get_rect(center=position)
 
 

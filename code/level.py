@@ -17,6 +17,13 @@ class Level:
         self.entity_list: list[Entity] = []
         self.entity_list.extend(EntityFactory.get_entity('BgLevel'))
         self.entity_list.extend(EntityFactory.get_entity('Player', position=(10, WIN_HEIGHT / 2), new_size=(110, 60)))
+        self.star_icon = pygame.image.load('./asset/star.png').convert_alpha()
+        self.life_icon = pygame.image.load('./asset/life.png').convert_alpha()
+        # Redimensiona os ícones
+        self.star_icon = pygame.transform.scale(self.star_icon, (30, 40))
+        self.life_icon = pygame.transform.scale(self.life_icon, (30, 30))
+        self.star_count = 0
+        self.player_name = "Player"
 
         self.sounds = {
             'hit': pygame.mixer.Sound('./asset/damage.wav'),
@@ -51,7 +58,7 @@ class Level:
 
             # Atualização do jogo
             spawn_timer += 1
-            if spawn_timer >= 85:  # 3 segundos
+            if spawn_timer >= 80:  # 3 segundos
                 self._spawn_wave()
                 spawn_timer = 0
 
@@ -93,8 +100,11 @@ class Level:
 
             # Mostra HUD
             self.show_star_count(star_count)
-            self.level_text(24, f"Vidas: {player_instance.health}", COLOR_WHITE, (10, 10))
-            self.level_text(24, f"Vidas: {player_instance.health}/{player_instance.max_health}", COLOR_WHITE, (10, 10))
+            # Mostra HUD - Vida
+            life_pos = (10, 10)
+            self.window.blit(self.life_icon, life_pos)
+            self.level_text(24, f"{player_instance.health}", COLOR_WHITE, (50, 10))
+            self.level_text(14, f'fps: {clock.get_fps():.0f}', COLOR_WHITE, (10, WIN_HEIGHT - 35))
             pygame.display.flip()
             clock.tick(60)
 
@@ -129,7 +139,12 @@ class Level:
         self.entity_list.append(EntityFactory.get_entity('Star', (WIN_WIDTH + 100, star_pos))[0])
 
     def show_star_count(self, star_count: int):
-        self.level_text(24, f"Estrelas: {star_count}", COLOR_WHITE, (WIN_WIDTH - 150, 20))
+        # Mostra o ícone de estrela
+        star_icon_rect = self.star_icon.get_rect(left=10, top=40)
+        self.window.blit(self.star_icon, star_icon_rect)
+
+        # Mostra o número ao lado do ícone
+        self.level_text(24, f"{star_count}", COLOR_WHITE, (50, 40))
 
     def level_text(self, text_size: int, text: str, text_color: tuple, text_pos: tuple):
         text_font = pygame.font.SysFont('Comic Sans MS', size=text_size)
