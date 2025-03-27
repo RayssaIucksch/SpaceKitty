@@ -9,7 +9,7 @@ from code.const import WIN_WIDTH, MENU_OPTION, COLOR_WHITE, COLOR_YELLOW
 class Menu:
     def __init__(self, window):
         self.window = window
-        self.surf = pygame.image.load('./asset/MenuBG.png')
+        self.surf = pygame.image.load('./asset/MenuBG.png').convert_alpha()
         self.rect = self.surf.get_rect(left=0, top=0)
 
     def run(self, ):
@@ -17,28 +17,27 @@ class Menu:
         pygame.mixer_music.load('./asset/backgroundaudio.mp3')
         pygame.mixer_music.play(-1)
 
-        while True:
-
-            # Check for all events
+        running = True
+        while running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    pygame.quit()  # Close Window
-                    quit()  # end pygame
+                    pygame.quit()
+                    return "EXIT"
 
                 if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_DOWN:  # DOWN KEY
-                        if menu_option < len(MENU_OPTION) - 1:
-                            menu_option += 1
-                        else:
-                            menu_option = 0
-                    if event.key == pygame.K_UP:  # UP KEY
-                        if menu_option > 0:
-                            menu_option -= 1
-                        else:
-                            menu_option = len(MENU_OPTION) - 1
-
-                    if event.key == pygame.K_RETURN: # ENTER KEY
+                    if event.key == pygame.K_DOWN:
+                        menu_option = (menu_option + 1) % len(MENU_OPTION)
+                    elif event.key == pygame.K_UP:
+                        menu_option = (menu_option - 1) % len(MENU_OPTION)
+                    elif event.key == pygame.K_RETURN:
+                        pygame.time.delay(200)  # Pequeno delay para feedback
                         return MENU_OPTION[menu_option]
+
+            # Renderização do menu
+            self.window.blit(self.surf, self.rect)
+            for i, option in enumerate(MENU_OPTION):
+                color = COLOR_YELLOW if i == menu_option else COLOR_WHITE
+                self.menu_text(25, option, color, (WIN_WIDTH / 2, 220 + 30 * i))
 
             pygame.display.flip()
 
