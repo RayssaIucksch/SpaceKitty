@@ -1,8 +1,6 @@
 import pygame
-
 from code.const import ENTITY_SPEED, WIN_HEIGHT, WIN_WIDTH, CONTROLS
 from code.entity import Entity
-
 
 class Player(Entity):
     def __init__(self, name: str, position: tuple, new_size: None):
@@ -11,19 +9,22 @@ class Player(Entity):
             self.surf = pygame.transform.scale(self.surf, new_size)
             self.rect = self.surf.get_rect(left=position[0], top=position[1])
 
+        # Player stats
         self.max_health = 3
-        self.health = self.max_health  # Vidas atuais
+        self.health = self.max_health
         self.score = 0
-        self.invincible = False  # Novo estado de invencibilidade
-        self.invincible_timer = 0
+        self.invincible = False  # Damage immunity flag
+        self.invincible_timer = 0  # Frames of remaining immunity
 
+        # Load sound effects
         try:
-            self.sound_hit = pygame.mixer.Sound('./asset/damage.wav')  # Corrigido para sound_hit
+            self.sound_hit = pygame.mixer.Sound('./asset/damage.wav')
             self.sound_collect = pygame.mixer.Sound('./asset/collectingstars.wav')
         except:
-            print("Erro ao carregar sons! Verifique os arquivos.")
+            print("Error loading sound files!")
 
-    def move(self, ):
+    def move(self):
+        # Handle player movement using configured controls
         pressed_key = pygame.key.get_pressed()
         if any(pressed_key[key] for key in CONTROLS['up']) and self.rect.top > 0:
             self.rect.centery -= ENTITY_SPEED[self.name]
@@ -43,29 +44,20 @@ class Player(Entity):
         if self.sound_hit:
             self.sound_hit.play()
 
-        # Ativa invencibilidade temporária
+        # Activate temporary invincibility (1 second at 60fps)
         self.invincible = True
-        self.invincible_timer = 60  # 1 segundo de invencibilidade (60 FPS)
+        self.invincible_timer = 60
 
-        print(f"Dano recebido! Vidas: {self.health}/{self.max_health}")
-        return self.health <= 0
+        return self.health <= 0  # Return True if player died
 
     def update(self):
-        # Atualiza o tempo de invencibilidade
+        # Count down invincibility frames
         if self.invincible:
             self.invincible_timer -= 1
             if self.invincible_timer <= 0:
                 self.invincible = False
 
-
-    def die(self):
-        print("Game Over!")
-        # Adicione aqui a lógica de game over
-
     def collect_star(self):
         self.score += 100
-        self.sound_collect.play()
-
-        print(f"Star collected! Score: {self.score}")
-
-    pass
+        if hasattr(self, 'sound_collect'):
+            self.sound_collect.play()

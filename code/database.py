@@ -1,8 +1,8 @@
 import sqlite3
 from datetime import datetime
 
-
 def criar_banco():
+    """Initialize the database with scores table"""
     conn = sqlite3.connect('game_scores.db')
     cursor = conn.cursor()
     cursor.execute('''
@@ -16,27 +16,24 @@ def criar_banco():
     conn.commit()
     conn.close()
 
-
 def salvar_score(player_name, stars):
+    """Save player score to database"""
     try:
         conn = sqlite3.connect('game_scores.db')
         cursor = conn.cursor()
         data_atual = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-        # Insere novo registro
         cursor.execute('''
             INSERT INTO scores (player_name, stars, date)
             VALUES (?, ?, ?)
         ''', (player_name, stars, data_atual))
-
         conn.commit()
     except Exception as e:
-        print(f"Erro ao salvar score: {e}")
+        print(f"Error saving score: {e}")
     finally:
         conn.close()
 
-
 def get_top_scores(limit=10):
+    """Retrieve top scores from database"""
     try:
         conn = sqlite3.connect('game_scores.db')
         cursor = conn.cursor()
@@ -46,14 +43,12 @@ def get_top_scores(limit=10):
             ORDER BY stars DESC 
             LIMIT ?
         ''', (limit,))
-        resultados = cursor.fetchall()
-        return resultados if resultados else None  # Retorna None se não houver scores
+        return cursor.fetchall() or None  # Return None if no scores
     except Exception as e:
-        print(f"Erro ao buscar scores: {e}")
+        print(f"Error fetching scores: {e}")
         return None
     finally:
         conn.close()
 
-
-# Cria o banco ao importar
+# Initialize database when module loads
 criar_banco()
