@@ -1,13 +1,14 @@
 import sys
 import random
 import pygame
+from datetime import datetime
 from code.const import COLOR_WHITE, WIN_HEIGHT, WIN_WIDTH
 from code.enemy import Enemy
 from code.entity import Entity
 from code.entityFactory import EntityFactory
 from code.player import Player
 from code.star import Star
-
+from code.database import salvar_score
 
 class Level:
     def __init__(self, window, name, game_mode):
@@ -17,11 +18,12 @@ class Level:
         self.entity_list: list[Entity] = []
         self.entity_list.extend(EntityFactory.get_entity('BgLevel'))
         self.entity_list.extend(EntityFactory.get_entity('Player', position=(10, WIN_HEIGHT / 2), new_size=(110, 60)))
+
         self.star_icon = pygame.image.load('./asset/star.png').convert_alpha()
         self.life_icon = pygame.image.load('./asset/life.png').convert_alpha()
-        # Redimensiona os ícones
         self.star_icon = pygame.transform.scale(self.star_icon, (30, 40))
         self.life_icon = pygame.transform.scale(self.life_icon, (30, 30))
+
         self.star_count = 0
         self.player_name = "Player"
 
@@ -35,12 +37,11 @@ class Level:
         self._spawn_wave()
 
     def run(self):
-        pygame.mixer_music.load('./asset/backgroundaudio.mp3')  # Ou carregue uma música diferente para o nível
+        pygame.mixer_music.load('./asset/backgroundaudio.mp3')
         pygame.mixer_music.play(-1)
 
         clock = pygame.time.Clock()
         spawn_timer = 0
-        star_count = 0
 
         player_instance = next((e for e in self.entity_list if isinstance(e, Player)), None)
         if player_instance is None:
@@ -50,100 +51,69 @@ class Level:
 
         running = True
         while running:
-            # Processamento de eventos
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
 
-            # Atualização do jogo
             spawn_timer += 1
-            if spawn_timer >= 80:  # 3 segundos
+            if spawn_timer >= 80:
                 self._spawn_wave()
                 spawn_timer = 0
 
-            # Movimento e colisões
             for ent in self.entity_list:
                 ent.move()
 
             player_instance.update()
 
-            # Verifica colisões
             for entity in self.entity_list[:]:
                 if entity.rect.colliderect(player_instance.rect):
                     if isinstance(entity, Enemy) and not player_instance.invincible:
                         if player_instance.take_damage():
-                            # Só termina o jogo na 3ª colisão
-                            print("Game Over!")
+                            try:
+                                salvar_score(self.player_name, self.star_count)
+                            except Exception as e:
+                                print(f"Erro ao salvar score: {e}")
                             return "GAME_OVER"
                         entity.kill()
-
                     elif isinstance(entity, Star):
-                        star_count += 1
+                        self.star_count += 1
                         if player_instance.sound_collect:
                             player_instance.sound_collect.play()
                         self.entity_list.remove(entity)
 
-            # Renderização
-            self.window.fill((0, 0, 0))  # Limpa a tela
+            self.window.fill((0, 0, 0))
             for ent in self.entity_list:
                 if ent == player_instance and player_instance.invincible:
-                    # Piscar quando invencível
-                    if pygame.time.get_ticks() % 200 < 100:  # Pisca a cada 100ms
+                    if pygame.time.get_ticks() % 200 < 100:
                         self.window.blit(ent.surf, ent.rect)
                 else:
                     self.window.blit(ent.surf, ent.rect)
 
-            for ent in self.entity_list:
-                if hasattr(ent, 'surf') and hasattr(ent, 'rect'):
-                    self.window.blit(ent.surf, ent.rect)
-
-            # Mostra HUD
-            self.show_star_count(star_count)
-            # Mostra HUD - Vida
-            life_pos = (10, 10)
-            self.window.blit(self.life_icon, life_pos)
+            self.show_star_count(self.star_count)
+            self.window.blit(self.life_icon, (10, 10))
             self.level_text(24, f"{player_instance.health}", COLOR_WHITE, (50, 10))
             self.level_text(14, f'fps: {clock.get_fps():.0f}', COLOR_WHITE, (10, WIN_HEIGHT - 35))
+
             pygame.display.flip()
             clock.tick(60)
 
         return "GAME_OVER"
 
-        # Spawn de inimigos e estrelas
-        spawn_timer += 1
-        if spawn_timer >= spawn_interval:
-            self._spawn_wave()
-            spawn_timer = 0
-
-        pygame.display.flip()
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-
     def _spawn_wave(self):
-        # Divide a tela em 4 slots verticais
         slots = [i * (WIN_HEIGHT // 4) + 50 for i in range(4)]
         random.shuffle(slots)
 
-        # 3 inimigos
         enemy_positions = slots[:3]
         for y in enemy_positions:
             self.entity_list.append(EntityFactory.get_entity('Enemy', (WIN_WIDTH + 100, y))[0])
 
-        # 1 estrela garantida em posição diferente
         possible_star_positions = [pos for pos in slots if pos not in enemy_positions]
         star_pos = random.choice(possible_star_positions) if possible_star_positions else slots[3]
         self.entity_list.append(EntityFactory.get_entity('Star', (WIN_WIDTH + 100, star_pos))[0])
 
     def show_star_count(self, star_count: int):
-        # Mostra o ícone de estrela
-        star_icon_rect = self.star_icon.get_rect(left=10, top=40)
-        self.window.blit(self.star_icon, star_icon_rect)
-
-        # Mostra o número ao lado do ícone
+        self.window.blit(self.star_icon, (10, 40))
         self.level_text(24, f"{star_count}", COLOR_WHITE, (50, 40))
 
     def level_text(self, text_size: int, text: str, text_color: tuple, text_pos: tuple):

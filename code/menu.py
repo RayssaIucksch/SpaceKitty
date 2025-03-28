@@ -1,8 +1,8 @@
+import pygame
 import pygame.image
 from pygame.font import Font
 from pygame.rect import Rect
 from pygame.surface import Surface
-
 from code.const import WIN_WIDTH, MENU_OPTION, COLOR_WHITE, COLOR_YELLOW
 
 
@@ -11,8 +11,9 @@ class Menu:
         self.window = window
         self.surf = pygame.image.load('./asset/MenuBG.png').convert_alpha()
         self.rect = self.surf.get_rect(left=0, top=0)
+        self.score_screen = None
 
-    def run(self, ):
+    def run(self):
         menu_option = 0
         pygame.mixer_music.load('./asset/backgroundaudio.mp3')
         pygame.mixer_music.play(-1)
@@ -30,26 +31,28 @@ class Menu:
                     elif event.key == pygame.K_UP:
                         menu_option = (menu_option - 1) % len(MENU_OPTION)
                     elif event.key == pygame.K_RETURN:
-                        pygame.time.delay(200)  # Pequeno delay para feedback
+                        pygame.time.delay(200)
+
+                        if MENU_OPTION[menu_option] == "SCORE":
+                            from code.score_screen import ScoreScreen
+                            score_screen = ScoreScreen(self.window)
+                            result = score_screen.run()
+
+                            if result == "EXIT":
+                                return "EXIT"
+
+                            pygame.mixer_music.play(-1)
+                            continue
+
                         return MENU_OPTION[menu_option]
 
-            # Renderização do menu
             self.window.blit(self.surf, self.rect)
+
             for i, option in enumerate(MENU_OPTION):
                 color = COLOR_YELLOW if i == menu_option else COLOR_WHITE
                 self.menu_text(25, option, color, (WIN_WIDTH / 2, 220 + 30 * i))
 
             pygame.display.flip()
-
-            self.window.blit(source=self.surf, dest=self.rect)
-
-            for i in range(len(MENU_OPTION)):
-
-                if i == menu_option:
-                    self.menu_text(25, MENU_OPTION[i], COLOR_YELLOW, ((WIN_WIDTH / 2), 220 + 30 * i))
-
-                else:
-                    self.menu_text(25, MENU_OPTION[i], COLOR_WHITE, ((WIN_WIDTH / 2), 220 + 30 * i))
 
     def menu_text(self, text_size: int, text: str, text_color: tuple, text_center_pos: tuple):
         text_font: Font = pygame.font.SysFont('Open Sans', size=text_size)
